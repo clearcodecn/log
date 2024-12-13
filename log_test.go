@@ -16,8 +16,8 @@ func TestLogger(t *testing.T) {
 	})
 
 	ctx := context.WithValue(context.Background(), "reqid", "123456")
-	New(ctx).Info("help me")
+	Logger(ctx).Info("help me")
 
 	ctx = context.WithValue(context.Background(), "reqid", "1234")
-	New(ctx).WithFields(Err(errors.New("some error"))).Error("help error")
+	Logger(ctx).WithFields(Err(errors.New("some error"))).Error("help error")
 }

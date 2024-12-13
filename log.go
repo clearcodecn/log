@@ -85,7 +85,7 @@ type contextLogger struct {
 	log   *zap.Logger
 }
 
-func New(ctx context.Context) *contextLogger {
+func Logger(ctx context.Context) *contextLogger {
 	return &contextLogger{
 		ctx:   ctx,
 		log:   std,
@@ -94,7 +94,7 @@ func New(ctx context.Context) *contextLogger {
 }
 
 func (c *contextLogger) New(ctx context.Context) *contextLogger {
-	return New(ctx)
+	return Logger(ctx)
 }
 
 func (c *contextLogger) Debug(msg string) {
@@ -130,17 +130,17 @@ func (c *contextLogger) WithFields(fields Field) *contextLogger {
 }
 
 func Debug(msg string, field Field) {
-	New(context.TODO()).WithFields(field).log.Debug(msg)
+	Logger(context.TODO()).WithFields(field).log.Debug(msg)
 }
 
 func Info(msg string, field Field) {
-	New(context.TODO()).WithFields(field).log.Debug(msg)
+	Logger(context.TODO()).WithFields(field).log.Debug(msg)
 }
 
 func Error(msg string, field Field) {
-	New(context.TODO()).WithFields(field).log.Debug(msg)
+	Logger(context.TODO()).WithFields(field).log.Debug(msg)
 }
 
 func Warn(msg string, field Field) {
-	New(context.TODO()).WithFields(field).log.Debug(msg)
+	Logger(context.TODO()).WithFields(field).log.Debug(msg)
 }

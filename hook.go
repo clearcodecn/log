@@ -43,3 +43,23 @@ func Any(key string, val any) Field {
 		key: val,
 	}
 }
+
+// utils start
+
+// reqidContext save a request id in context.
+type reqidContext struct{}
+
+func WithRequestId(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, reqidContext{}, id)
+}
+
+// ReqId set context with request id in all log trace.
+func ReqId(ctx context.Context) Field {
+	reqid, ok := ctx.Value(reqidContext{}).(string)
+	if !ok {
+		return Field{}
+	}
+	return Field{
+		"reqid": reqid,
+	}
+}
