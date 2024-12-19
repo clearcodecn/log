@@ -56,7 +56,7 @@ func GinLog(conf GinLogConfigure) gin.HandlerFunc {
 				return
 			}
 		}
-		var field Field
+		var field = make(Field)
 		// 结束时间
 		end := time.Now()
 		// 执行时间
