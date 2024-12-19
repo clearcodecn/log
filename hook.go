@@ -16,16 +16,15 @@ func AddHook(hook Hook) {
 	globalHooks = append(globalHooks, hook)
 }
 
-func runHook(ctx context.Context) []zap.Field {
-	var fields = make(Field)
+func runHook(c *contextLogger) []zap.Field {
 	for _, h := range globalHooks {
-		field := h(ctx)
+		field := h(c.ctx)
 		for k, v := range field {
-			fields[k] = v
+			c.field[k] = v
 		}
 	}
 	var zapFields []zap.Field
-	for k, v := range fields {
+	for k, v := range c.field {
 		zapFields = append(zapFields, zap.Any(k, v))
 	}
 

@@ -98,22 +98,22 @@ func (c *contextLogger) New(ctx context.Context) *contextLogger {
 }
 
 func (c *contextLogger) Debug(msg string) {
-	fields := runHook(c.ctx)
+	fields := runHook(c)
 	c.log.Debug(msg, fields...)
 }
 
 func (c *contextLogger) Info(msg string) {
-	fields := runHook(c.ctx)
+	fields := runHook(c)
 	c.log.Info(msg, fields...)
 }
 
 func (c *contextLogger) Error(msg string) {
-	fields := runHook(c.ctx)
+	fields := runHook(c)
 	c.log.Error(msg, fields...)
 }
 
 func (c *contextLogger) Warn(msg string) {
-	fields := runHook(c.ctx)
+	fields := runHook(c)
 	c.log.Warn(msg, fields...)
 }
 
@@ -130,17 +130,17 @@ func (c *contextLogger) WithFields(fields Field) *contextLogger {
 }
 
 func Debug(msg string, field Field) {
-	Logger(context.TODO()).WithFields(field).log.Debug(msg)
+	Logger(context.TODO()).WithFields(field).Debug(msg)
 }
 
 func Info(msg string, field Field) {
-	Logger(context.TODO()).WithFields(field).log.Debug(msg)
+	Logger(context.TODO()).WithFields(field).Debug(msg)
 }
 
 func Error(msg string, field Field) {
-	Logger(context.TODO()).WithFields(field).log.Debug(msg)
+	Logger(context.TODO()).WithFields(field).Debug(msg)
 }
 
 func Warn(msg string, field Field) {
-	Logger(context.TODO()).WithFields(field).log.Debug(msg)
+	Logger(context.TODO()).WithFields(field).Debug(msg)
 }
