@@ -5,20 +5,20 @@ zap based logger
 ### install 
 
 ```shell
-  go get github.com/clearcodecn/xlogger@latest
+  go get github.com/clearcodecn/log@latest
 ```
 
 ### Usage
 
 ```shell
-   import "github.com/clearcodecn/xlogger"
+   import "github.com/clearcodecn/log"
 ```
 
 * add hooks to logger and inject log fields to logger. 
 
 ```go
 
-    xlogger.AddHook(func(ctx context.Context) Field {
+    log.AddHook(func(ctx context.Context) Field {
         reqid, ok := ctx.Value("reqid").(string)
         if !ok {
         return Field{}
@@ -27,7 +27,7 @@ zap based logger
     })
     
     ctx := context.WithValue(context.Background(), "reqid", "123456")
-    xlogger.Logger(ctx).Info("help me")
+	log.Logger(ctx).Info("help me")
 ```
 
 * gin middleware
@@ -36,7 +36,7 @@ zap based logger
 var conf xlogger.GinLogConfigure
 conf.SkipPrefix("/static","/favico.ico")
 conf.AddHeaderKeys("reqid")
-gin.Use(xlogger.GinLog(conf))
+gin.Use(log.GinLog(conf))
 ```
 
 * gorm middleware
@@ -44,6 +44,6 @@ gin.Use(xlogger.GinLog(conf))
 ```go
 db := gorm.New()
 
-db.Use(xlogger.NewLoggerPlugin())
+db.Use(log.NewLoggerPlugin())
 
 ```
