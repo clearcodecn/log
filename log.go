@@ -2,6 +2,7 @@ package xlogger
 
 import (
 	"context"
+	"github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"time"
@@ -33,7 +34,7 @@ type Config struct {
 	File   string `json:"file"`
 }
 
-func NewLog(config Config) (*zap.Logger, error) {
+func NewLog(config Config) (*logrus.Logger, error) {
 	return newStdLog(config)
 }
 
@@ -41,36 +42,15 @@ func SetGlobal(logger *zap.Logger) {
 	std = logger
 }
 
-func newStdLog(config Config) (*zap.Logger, error) {
-	zapConfig := zap.NewProductionConfig()
-
-	enc := zapcore.EncoderConfig{
-		// Keys can be anything except the empty string.
-		TimeKey:        "ti",
-		LevelKey:       "lvl",
-		NameKey:        "name",
-		CallerKey:      "caller",
-		MessageKey:     "msg",
-		StacktraceKey:  "stack",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalLevelEncoder,
-		EncodeTime:     timeEncode(),
-		EncodeDuration: zapcore.StringDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
-	}
-	if config.File != "" {
-		zapConfig.OutputPaths = []string{config.File}
-	} else {
-		zapConfig.Encoding = "console"
-	}
-	zapConfig.EncoderConfig = enc
-
-	var level = zapcore.DebugLevel
+func newStdLog(config *Config) (*logrus.Logger, error) {
+	l := logrus.New()
 	if config.Level != "" {
-		_ = level.Set(config.Level)
+		lvl, err := logrus.ParseLevel(config.Level)
+		if err != nil {
+			return nil, err
+		}
+		l.SetLevel(lvl)
 	}
-	zapConfig.Level = zap.NewAtomicLevelAt(level)
-	return zapConfig.Build(zap.AddCallerSkip(1), zap.AddCaller())
 }
 
 func timeEncode() zapcore.TimeEncoder {
@@ -122,25 +102,27 @@ func (c *contextLogger) WithField(key string, val any) *contextLogger {
 	return c
 }
 
-func (c *contextLogger) WithFields(fields Field) *contextLogger {
-	for k, v := range fields {
-		c.field[k] = v
+func (c *contextLogger) WithFields(fields ...Field) *contextLogger {
+	for _, field := range fields {
+		for k, v := range field {
+			c.field[k] = v
+		}
 	}
 	return c
 }
 
-func Debug(msg string, field Field) {
-	Logger(context.TODO()).WithFields(field).Debug(msg)
+func Debug(msg string, fields ...Field) {
+	Logger(context.TODO()).WithFields(fields...).log.Debug(msg)
 }
 
-func Info(msg string, field Field) {
-	Logger(context.TODO()).WithFields(field).Debug(msg)
+func Info(msg string, fields ...Field) {
+	Logger(context.TODO()).WithFields(fields...).log.Debug(msg)
 }
 
-func Error(msg string, field Field) {
-	Logger(context.TODO()).WithFields(field).Debug(msg)
+func Error(msg string, fields ...Field) {
+	Logger(context.TODO()).WithFields(fields...).log.Debug(msg)
 }
 
-func Warn(msg string, field Field) {
-	Logger(context.TODO()).WithFields(field).Debug(msg)
+func Warn(msg string, fields ...Field) {
+	Logger(context.TODO()).WithFields(fields...).log.Debug(msg)
 }
