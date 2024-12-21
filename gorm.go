@@ -70,7 +70,7 @@ func (p *loggerPlugin) after(op string) func(db *gorm.DB) {
 		}
 		latency := time.Since(before.begin)
 		if db.Error != nil && !p.isErrorIgnorable(db.Error) {
-			Logger(db.Statement.Context).WithFields(Field{
+			WithContext(db.Statement.Context).WithFields(Field{
 				"scene":    "mysql",
 				"table":    db.Statement.Table,
 				"op":       op,
@@ -79,7 +79,7 @@ func (p *loggerPlugin) after(op string) func(db *gorm.DB) {
 				"error":    db.Error,
 			}).Error("mysql exec failed")
 		} else {
-			Logger(db.Statement.Context).WithFields(Field{
+			WithContext(db.Statement.Context).WithFields(Field{
 				"scene":    "mysql",
 				"table":    db.Statement.Table,
 				"op":       op,

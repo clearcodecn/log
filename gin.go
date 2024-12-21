@@ -82,6 +82,6 @@ func GinLog(conf GinLogConfigure) gin.HandlerFunc {
 			field["userAgent"] = c.Request.UserAgent()
 		}
 		field["scene"] = "http_server_request"
-		Logger(c.Request.Context()).WithFields(field).Info("http_request")
+		WithContext(c.Request.Context()).WithFields(field).Info("http_request")
 	}
 }
