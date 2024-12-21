@@ -77,6 +77,7 @@ func (p *loggerPlugin) after(op string) func(db *gorm.DB) {
 				"duration": latency,
 				"sql":      db.Statement.SQL.String(),
 				"error":    db.Error,
+				"args":     db.Statement.Vars,
 			}).Error("mysql exec failed")
 		} else {
 			WithContext(db.Statement.Context).WithFields(Field{
@@ -85,7 +86,8 @@ func (p *loggerPlugin) after(op string) func(db *gorm.DB) {
 				"op":       op,
 				"duration": latency,
 				"sql":      db.Statement.SQL.String(),
-			}).Error("mysql exec success")
+				"args":     db.Statement.Vars,
+			}).Info("mysql exec success")
 		}
 	}
 }
