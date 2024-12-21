@@ -2,14 +2,15 @@ package xlogger
 
 import (
 	"context"
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"time"
 )
 
 var (
-	std *zap.Logger
+	std *logrus.Logger
 )
 
 func init() {
@@ -38,11 +39,11 @@ func NewLog(config Config) (*logrus.Logger, error) {
 	return newStdLog(config)
 }
 
-func SetGlobal(logger *zap.Logger) {
+func SetGlobal(logger *logrus.Logger) {
 	std = logger
 }
 
-func newStdLog(config *Config) (*logrus.Logger, error) {
+func newStdLog(config Config) (*logrus.Logger, error) {
 	l := logrus.New()
 	if config.Level != "" {
 		lvl, err := logrus.ParseLevel(config.Level)
@@ -51,6 +52,26 @@ func newStdLog(config *Config) (*logrus.Logger, error) {
 		}
 		l.SetLevel(lvl)
 	}
+	if config.File != "" {
+		l.SetOutput(&lumberjack.Logger{
+			Filename:   config.File,
+			MaxSize:    500, // megabytes
+			MaxBackups: 3,
+			MaxAge:     28, //days
+		})
+	}
+
+	l.SetReportCaller(true)
+	l.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat:   `060102-150405`,
+		DisableTimestamp:  false,
+		DisableHTMLEscape: false,
+		DataKey:           "",
+		FieldMap:          nil,
+		CallerPrettyfier:  nil,
+		PrettyPrint:       false,
+	})
+	return l, nil
 }
 
 func timeEncode() zapcore.TimeEncoder {
@@ -62,10 +83,14 @@ func timeEncode() zapcore.TimeEncoder {
 type contextLogger struct {
 	ctx   context.Context
 	field Field
-	log   *zap.Logger
+	log   *logrus.Logger
 }
 
-func Logger(ctx context.Context) *contextLogger {
+func WithContext(ctx context.Context) *contextLogger {
+	ginCtx, ok := ctx.(*gin.Context)
+	if ok {
+		ctx = ginCtx.Request.Context()
+	}
 	return &contextLogger{
 		ctx:   ctx,
 		log:   std,
@@ -74,27 +99,28 @@ func Logger(ctx context.Context) *contextLogger {
 }
 
 func (c *contextLogger) New(ctx context.Context) *contextLogger {
-	return Logger(ctx)
+	newLogger := WithContext(ctx)
+	return newLogger.WithFields(c.field)
 }
 
 func (c *contextLogger) Debug(msg string) {
 	fields := runHook(c)
-	c.log.Debug(msg, fields...)
+	c.log.WithFields(fields).Debug(msg)
 }
 
 func (c *contextLogger) Info(msg string) {
 	fields := runHook(c)
-	c.log.Info(msg, fields...)
+	c.log.WithFields(fields).Info(msg)
 }
 
 func (c *contextLogger) Error(msg string) {
 	fields := runHook(c)
-	c.log.Error(msg, fields...)
+	c.log.WithFields(fields).Error(msg)
 }
 
 func (c *contextLogger) Warn(msg string) {
 	fields := runHook(c)
-	c.log.Warn(msg, fields...)
+	c.log.WithFields(fields).Warn(msg)
 }
 
 func (c *contextLogger) WithField(key string, val any) *contextLogger {
@@ -111,18 +137,22 @@ func (c *contextLogger) WithFields(fields ...Field) *contextLogger {
 	return c
 }
 
-func Debug(msg string, fields ...Field) {
-	Logger(context.TODO()).WithFields(fields...).log.Debug(msg)
+func Debug(ctx context.Context, msg string, fields ...Field) {
+	WithContext(ctx).WithFields(fields...).log.Debug(msg)
 }
 
-func Info(msg string, fields ...Field) {
-	Logger(context.TODO()).WithFields(fields...).log.Debug(msg)
+func Info(ctx context.Context, msg string, fields ...Field) {
+	WithContext(ctx).WithFields(fields...).log.Debug(msg)
 }
 
-func Error(msg string, fields ...Field) {
-	Logger(context.TODO()).WithFields(fields...).log.Debug(msg)
+func Error(ctx context.Context, msg string, fields ...Field) {
+	WithContext(ctx).WithFields(fields...).log.Debug(msg)
 }
 
-func Warn(msg string, fields ...Field) {
-	Logger(context.TODO()).WithFields(fields...).log.Debug(msg)
+func Warn(ctx context.Context, msg string, fields ...Field) {
+	WithContext(ctx).WithFields(fields...).log.Debug(msg)
+}
+
+func WithErr(ctx context.Context, err error) *contextLogger {
+	return WithContext(ctx).WithFields(Err(err))
 }
