@@ -110,7 +110,7 @@ func formatSQL(sql string, args []interface{}) string {
 		if idx == -1 {
 			break
 		}
-		sql = sql[:idx] + fmt.Sprintf(`'%s'`, argString(arg)) + sql[idx+1:]
+		sql = sql[:idx] + fmt.Sprintf(`%s`, argString(arg)) + sql[idx+1:]
 	}
 	return sql
 }
@@ -124,6 +124,6 @@ func argString(v interface{}) string {
 	case float32:
 		return strconv.FormatFloat(float64(x), 'g', -1, 32)
 	default:
-		return fmt.Sprintf("%v", x)
+		return fmt.Sprintf("'%v'", x)
 	}
 }
