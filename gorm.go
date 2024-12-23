@@ -124,6 +124,6 @@ func argString(v interface{}) string {
 	case float32:
 		return strconv.FormatFloat(float64(x), 'g', -1, 32)
 	default:
-		return fmt.Sprintf("%s", x)
+		return fmt.Sprintf("%v", x)
 	}
 }
