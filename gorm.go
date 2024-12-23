@@ -1,7 +1,10 @@
 package xlogger
 
 import (
+	"fmt"
 	"gorm.io/gorm"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -70,23 +73,24 @@ func (p *loggerPlugin) after(op string) func(db *gorm.DB) {
 		}
 		latency := time.Since(before.begin)
 		if db.Error != nil && !p.isErrorIgnorable(db.Error) {
+			sql := formatSQL(db.Statement.SQL.String(), db.Statement.Vars)
 			WithContext(db.Statement.Context).WithFields(Field{
 				"scene":    "mysql",
 				"table":    db.Statement.Table,
 				"op":       op,
 				"duration": latency,
-				"sql":      db.Statement.SQL.String(),
+				"sql":      sql,
 				"error":    db.Error,
 				"args":     db.Statement.Vars,
 			}).Error("mysql exec failed")
 		} else {
+			sql := formatSQL(db.Statement.SQL.String(), db.Statement.Vars)
 			WithContext(db.Statement.Context).WithFields(Field{
 				"scene":    "mysql",
 				"table":    db.Statement.Table,
 				"op":       op,
 				"duration": latency,
-				"sql":      db.Statement.SQL.String(),
-				"args":     db.Statement.Vars,
+				"sql":      sql,
 				"rows":     db.RowsAffected,
 			}).Info("mysql exec success")
 		}
@@ -98,4 +102,28 @@ func (p *loggerPlugin) isErrorIgnorable(err error) bool {
 		return true
 	}
 	return false
+}
+
+func formatSQL(sql string, args []interface{}) string {
+	for _, arg := range args {
+		idx := strings.Index(sql, "?")
+		if idx == -1 {
+			break
+		}
+		sql = sql[:idx] + fmt.Sprintf(`'%s'`, argString(arg)) + sql[idx+1:]
+	}
+	return sql
+}
+
+func argString(v interface{}) string {
+	switch x := v.(type) {
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		return fmt.Sprintf("%d", x)
+	case float64:
+		return strconv.FormatFloat(x, 'g', -1, 64)
+	case float32:
+		return strconv.FormatFloat(float64(x), 'g', -1, 32)
+	default:
+		return fmt.Sprintf("%s", x)
+	}
 }
