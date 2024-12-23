@@ -87,6 +87,7 @@ func (p *loggerPlugin) after(op string) func(db *gorm.DB) {
 				"duration": latency,
 				"sql":      db.Statement.SQL.String(),
 				"args":     db.Statement.Vars,
+				"rows":     db.RowsAffected,
 			}).Info("mysql exec success")
 		}
 	}
