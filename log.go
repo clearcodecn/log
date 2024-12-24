@@ -2,15 +2,19 @@ package xlogger
 
 import (
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
+	"runtime"
+	"strings"
 	"time"
 )
 
 var (
-	std *logrus.Logger
+	std        *logrus.Logger
+	callPrefix string
 )
 
 func init() {
@@ -30,9 +34,10 @@ var (
 )
 
 type Config struct {
-	Level  string `json:"level"`
-	Format string `json:"format"`
-	File   string `json:"file"`
+	Level      string `json:"level"`
+	Format     string `json:"format"`
+	File       string `json:"file"`
+	CallPrefix string `json:"callerPrefix"`
 }
 
 func NewLog(config Config) (*logrus.Logger, error) {
@@ -61,7 +66,6 @@ func newStdLog(config Config) (*logrus.Logger, error) {
 		})
 	}
 
-	l.SetReportCaller(true)
 	l.SetFormatter(&logrus.JSONFormatter{
 		TimestampFormat:   `060102-150405`,
 		DisableTimestamp:  false,
@@ -71,6 +75,7 @@ func newStdLog(config Config) (*logrus.Logger, error) {
 		CallerPrettyfier:  nil,
 		PrettyPrint:       false,
 	})
+	callPrefix = config.CallPrefix
 	return l, nil
 }
 
@@ -105,21 +110,37 @@ func (c *contextLogger) New(ctx context.Context) *contextLogger {
 
 func (c *contextLogger) Debug(msg string) {
 	fields := runHook(c)
+	caller, line := c.getCaller(1)
+	if caller != "" {
+		fields["caller"] = fmt.Sprintf("%s:%d", caller, line)
+	}
 	c.log.WithFields(fields).Debug(msg)
 }
 
 func (c *contextLogger) Info(msg string) {
 	fields := runHook(c)
+	caller, line := c.getCaller(1)
+	if caller != "" {
+		fields["caller"] = fmt.Sprintf("%s:%d", caller, line)
+	}
 	c.log.WithFields(fields).Info(msg)
 }
 
 func (c *contextLogger) Error(msg string) {
 	fields := runHook(c)
+	caller, line := c.getCaller(1)
+	if caller != "" {
+		fields["caller"] = fmt.Sprintf("%s:%d", caller, line)
+	}
 	c.log.WithFields(fields).Error(msg)
 }
 
 func (c *contextLogger) Warn(msg string) {
 	fields := runHook(c)
+	caller, line := c.getCaller(1)
+	if caller != "" {
+		fields["caller"] = fmt.Sprintf("%s:%d", caller, line)
+	}
 	c.log.WithFields(fields).Warn(msg)
 }
 
@@ -142,17 +163,26 @@ func Debug(ctx context.Context, msg string, fields ...Field) {
 }
 
 func Info(ctx context.Context, msg string, fields ...Field) {
-	WithContext(ctx).WithFields(fields...).log.Debug(msg)
+	WithContext(ctx).WithFields(fields...).log.Info(msg)
 }
 
 func Error(ctx context.Context, msg string, fields ...Field) {
-	WithContext(ctx).WithFields(fields...).log.Debug(msg)
+	WithContext(ctx).WithFields(fields...).log.Error(msg)
 }
 
 func Warn(ctx context.Context, msg string, fields ...Field) {
-	WithContext(ctx).WithFields(fields...).log.Debug(msg)
+	WithContext(ctx).WithFields(fields...).log.Warn(msg)
 }
 
 func WithErr(ctx context.Context, err error) *contextLogger {
 	return WithContext(ctx).WithFields(Err(err))
+}
+
+// logWithCaller 记录日志并包含调用者信息
+func (l *contextLogger) getCaller(n int) (string, int) {
+	_, file, line, _ := runtime.Caller(n + 1) // 获取调用者信息
+	if len(file) != 0 {
+		file = strings.TrimPrefix(file, callPrefix)
+	}
+	return file, line
 }
