@@ -3,13 +3,14 @@ package xlogger
 import (
 	"context"
 	"fmt"
+	"runtime"
+	"strings"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"runtime"
-	"strings"
-	"time"
 )
 
 var (
@@ -58,23 +59,27 @@ func newStdLog(config Config) (*logrus.Logger, error) {
 		l.SetLevel(lvl)
 	}
 	if config.File != "" {
-		l.SetOutput(&lumberjack.Logger{
-			Filename:   config.File,
-			MaxSize:    500, // megabytes
-			MaxBackups: 3,
-			MaxAge:     28, //days
-		})
+		l.SetOutput(
+			&lumberjack.Logger{
+				Filename:   config.File,
+				MaxSize:    500, // megabytes
+				MaxBackups: 3,
+				MaxAge:     28, // days
+			},
+		)
 	}
 
-	l.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat:   `060102-150405`,
-		DisableTimestamp:  false,
-		DisableHTMLEscape: false,
-		DataKey:           "",
-		FieldMap:          nil,
-		CallerPrettyfier:  nil,
-		PrettyPrint:       false,
-	})
+	l.SetFormatter(
+		&logrus.JSONFormatter{
+			TimestampFormat:   `060102-150405`,
+			DisableTimestamp:  false,
+			DisableHTMLEscape: false,
+			DataKey:           "",
+			FieldMap:          nil,
+			CallerPrettyfier:  nil,
+			PrettyPrint:       false,
+		},
+	)
 	callPrefix = config.CallPrefix
 	return l, nil
 }
@@ -159,19 +164,19 @@ func (c *contextLogger) WithFields(fields ...Field) *contextLogger {
 }
 
 func Debug(ctx context.Context, msg string, fields ...Field) {
-	WithContext(ctx).WithFields(fields...).log.Debug(msg)
+	WithContext(ctx).WithFields(fields...).Debug(msg)
 }
 
 func Info(ctx context.Context, msg string, fields ...Field) {
-	WithContext(ctx).WithFields(fields...).log.Info(msg)
+	WithContext(ctx).WithFields(fields...).Info(msg)
 }
 
 func Error(ctx context.Context, msg string, fields ...Field) {
-	WithContext(ctx).WithFields(fields...).log.Error(msg)
+	WithContext(ctx).WithFields(fields...).Error(msg)
 }
 
 func Warn(ctx context.Context, msg string, fields ...Field) {
-	WithContext(ctx).WithFields(fields...).log.Warn(msg)
+	WithContext(ctx).WithFields(fields...).Warn(msg)
 }
 
 func WithErr(ctx context.Context, err error) *contextLogger {
