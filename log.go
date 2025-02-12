@@ -115,7 +115,7 @@ func (c *contextLogger) New(ctx context.Context) *contextLogger {
 
 func (c *contextLogger) Debug(msg string) {
 	fields := runHook(c)
-	caller, line := c.getCaller(2)
+	caller, line := c.getCaller(1)
 	if caller != "" {
 		fields["caller"] = fmt.Sprintf("%s:%d", caller, line)
 	}
@@ -124,7 +124,7 @@ func (c *contextLogger) Debug(msg string) {
 
 func (c *contextLogger) Info(msg string) {
 	fields := runHook(c)
-	caller, line := c.getCaller(2)
+	caller, line := c.getCaller(1)
 	if caller != "" {
 		fields["caller"] = fmt.Sprintf("%s:%d", caller, line)
 	}
@@ -133,7 +133,7 @@ func (c *contextLogger) Info(msg string) {
 
 func (c *contextLogger) Error(msg string) {
 	fields := runHook(c)
-	caller, line := c.getCaller(2)
+	caller, line := c.getCaller(1)
 	if caller != "" {
 		fields["caller"] = fmt.Sprintf("%s:%d", caller, line)
 	}
@@ -142,7 +142,7 @@ func (c *contextLogger) Error(msg string) {
 
 func (c *contextLogger) Warn(msg string) {
 	fields := runHook(c)
-	caller, line := c.getCaller(2)
+	caller, line := c.getCaller(1)
 	if caller != "" {
 		fields["caller"] = fmt.Sprintf("%s:%d", caller, line)
 	}
